@@ -187,19 +187,19 @@ if __name__ == '__main__':
                         stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
                         skip = False
                         for k in range(len(overlapcheck)):
-                            if start_time < overlapcheck[k][2] and stop_time >= overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
-                                if str(episodeid) != newepisodes[i-1][2]:
-                                    if start_time < overlapcheck[k][2] and stop_time <= overlapcheck[k][2]:
-                                        skip = True
+                            if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
+                                if i > 0:
+                                    if str(episodeid) == newepisodes[i-1][2]:
+                                        print('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                        time.sleep(1)
                                         break
-                                    else:
-                                        start_time = overlapcheck[k][2]
-                                        start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
-                                else:
-                                    overlapcheck.append([ch_id, start_time, stop_time])
-                                    print('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                                    time.sleep(1)
+                                if stop_time <= overlapcheck[k][2]:
+                                    skip = True
                                     break
+                                else:
+                                    start_time = overlapcheck[k][2]
+                                    start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
+                                    print('Overlap detected and start time adjusted for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
                         overlapcheck.append([ch_id, start_time, stop_time])
                         if not skip:
                             xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
