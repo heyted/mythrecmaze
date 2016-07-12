@@ -17,7 +17,7 @@ def getICalEpisodes(token):
         day = today + timedelta(days=i)
         days.append(day.strftime("%Y%m%d"))
     episodes = []
-    for i in range(len(iCalIcs)-20):
+    for i in range(len(iCalIcs)-200):
         episode = []
         if iCalIcs[i : i + 5] == 'DTEND':
             for j in range(1, 200):
