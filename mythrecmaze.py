@@ -146,6 +146,8 @@ if __name__ == '__main__':
                 print('Error in mythrecmaze.py (unable to save episodes list)')
                 sys.exit(1)
             newepisodes = episodes
+    else:
+        newepisodes = []
     print('Downloading TVmaze schedule')
     noschedule = True
     with open('xmltv.xml', 'w') as xml_file:
