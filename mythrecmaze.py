@@ -218,7 +218,7 @@ if __name__ == '__main__':
     #Run mythfilldatabase:
     subprocess.call('mythfilldatabase --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
     pym = mythRecord(mythlanip, mythport)
-    chaninfo = pym.GetChannelInfoList(SourceID=mythsourceid)
+    chaninfo = pym.GetChannelInfoList(SourceID=mythsourceid, Details='true')
     if chaninfo:
         chaninfo = chaninfo['ChannelInfoList']['ChannelInfos']
     else:
