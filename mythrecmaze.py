@@ -181,7 +181,10 @@ if __name__ == '__main__':
                 if not day in daysdone:
                     name = schedule_dicts[j]['show']['name']
                     runtime = schedule_dicts[j]['runtime']
-                    description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
+                    try:
+                        description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
+                    except:
+                        description = ''
                     if name and time and runtime and ch_id:
                         start = time[0:4]+time[5:7]+time[8:10]+time[11:13]+time[14:16]+time[17:19]+' '+time[19:22]+time[23:25]
                         start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
@@ -208,8 +211,8 @@ if __name__ == '__main__':
                             xml_file.write('    <title lang="en">'+name+'</title>'+'\n')
                             xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
                             xml_file.write('  </programme>'+'\n')
-                        if i == 0 and j == 0:
-                            noschedule = False
+                            if noschedule:
+                                noschedule = False
             daysdone = daysdone + [day]
         xml_file.write('</tv>')
     if noschedule:
