@@ -171,13 +171,13 @@ if __name__ == '__main__':
             for j in range(len(schedule_dicts)):
                 episodeid = schedule_dicts[j]['id']
                 ch_id = str(schedule_dicts[j]['show']['network']['id'])
-                time = schedule_dicts[j]['airstamp']
+                tm = schedule_dicts[j]['airstamp']
                 if i > 0:
                     if str(episodeid) == newepisodes[i-1][2]:
                         if day != scheduleday:
                             print('Error in mythrecmaze.py (unexpected schedule sort order)')
                             sys.exit(1)
-                        newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [time]
+                        newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [tm]
                 if not day in daysdone:
                     name = schedule_dicts[j]['show']['name']
                     runtime = schedule_dicts[j]['runtime']
@@ -185,11 +185,11 @@ if __name__ == '__main__':
                         description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
                     except:
                         description = ''
-                    if name and time and runtime and ch_id:
-                        start = time[0:4]+time[5:7]+time[8:10]+time[11:13]+time[14:16]+time[17:19]+' '+time[19:22]+time[23:25]
+                    if name and tm and runtime and ch_id:
+                        start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
                         start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
                         stop_time = start_time + timedelta(minutes=runtime)
-                        stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
+                        stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
                         skip = False
                         for k in range(len(overlapcheck)):
                             if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
