@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time
+import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time, csv
 from datetime import date, datetime, timedelta, timezone
 
 #Get episode ids, dates and end times for seven days (single token):
@@ -95,6 +95,7 @@ if __name__ == '__main__':
         mythport = config.get('mythrecmazesettings', 'mythport')
         mythsourceid = config.get('mythrecmazesettings', 'mythsourceid')
         mazetokens = config.get('mythrecmazesettings', 'mazetokens').split(',')
+        showdetails = config.getboolean('mythrecmazesettings', 'showdetails')
     else:
         mythlanip = input('Enter MythTV backend server IP address (example: 192.168.1.50) --> ')
         if isbadipv4(mythlanip):
@@ -127,6 +128,8 @@ if __name__ == '__main__':
         config.set('mythrecmazesettings', 'mythport', mythport)
         config.set('mythrecmazesettings', 'mythsourceid', mythsourceid)
         config.set('mythrecmazesettings', 'mazetokens', ','.join(mazetokens))
+        config.set('mythrecmazesettings', 'showdetails', 'False')
+        showdetails = False
         with open(homepath + '/mythrecmaze.cfg', 'w') as configfile:
             config.write(configfile)
     print('Opening TVmaze connection')
@@ -150,6 +153,15 @@ if __name__ == '__main__':
         newepisodes = []
     print('Downloading TVmaze schedule')
     noschedule = True
+    usingNonMazeChIds = False
+    if os.path.isfile(homepath + '/xmltvidmap.csv'):
+        usingNonMazeChIds = True
+        with open('xmltvidmap.csv', 'r') as f:
+            reader = csv.reader(f)
+            channelsMap = list(reader)
+        channelsMazeInclude = []
+        for i in range(len(channelsMap)):
+            channelsMazeInclude = channelsMazeInclude + [channelsMap[i][1]]
     with open('xmltv.xml', 'w') as xml_file:
         xml_file.write('<?xml version="1.0" encoding="ISO-8859-1"?>'+'\n')
         xml_file.write('<!DOCTYPE tv SYSTEM "xmltv.dtd">'+'\n')
@@ -157,6 +169,7 @@ if __name__ == '__main__':
         xml_file.write('<tv source-info-name="TVmaze" generator-info-name="mythrecmaze.py">'+'\n')
         schedule_dicts = getSchedule('http://api.tvmaze.com/schedule')#Always get today's schedule
         daysdone = []
+        channelsMazeSkipped = []
         #Write out schedule for each unique day in newepisodes and add network id and start time to new episodes list:
         for i in range(len(newepisodes)+1):
             overlapcheck = []
@@ -172,54 +185,67 @@ if __name__ == '__main__':
                 episodeid = schedule_dicts[j]['id']
                 ch_id = str(schedule_dicts[j]['show']['network']['id'])
                 tm = schedule_dicts[j]['airstamp']
+                name = schedule_dicts[j]['show']['name']
+                start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
+                start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
+                if usingNonMazeChIds:
+                    if ch_id in channelsMazeInclude:
+                        ch_id = channelsMap[channelsMazeInclude.index(ch_id)][0]
+                    else:
+                        if not ch_id in channelsMazeSkipped:
+                            if showdetails:
+                                print('Skipping TVmaze network id ' + ch_id + ' (not included in xmltvidmap.csv)')
+                            channelsMazeSkipped = channelsMazeSkipped + [ch_id]
+                        continue
                 if i > 0:
                     if str(episodeid) == newepisodes[i-1][2]:
                         if day != scheduleday:
                             print('Error in mythrecmaze.py (unexpected schedule sort order)')
                             sys.exit(1)
                         newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [tm]
+                        print('To be recorded: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                 if not day in daysdone:
-                    name = schedule_dicts[j]['show']['name']
                     runtime = schedule_dicts[j]['runtime']
                     try:
                         description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
                     except:
                         description = ''
-                    if name and tm and runtime and ch_id:
-                        start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
-                        start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
-                        stop_time = start_time + timedelta(minutes=runtime)
-                        stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
-                        skip = False
-                        for k in range(len(overlapcheck)):
-                            if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
-                                if i > 0:
-                                    if str(episodeid) == newepisodes[i-1][2]:
-                                        print('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                                        time.sleep(1)
-                                        break
-                                if stop_time <= overlapcheck[k][2]:
-                                    skip = True
+                    stop_time = start_time + timedelta(minutes=runtime)
+                    stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
+                    skip = False
+                    for k in range(len(overlapcheck)):
+                        if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
+                            if i > 0:
+                                if str(episodeid) == newepisodes[i-1][2]:
+                                    print('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    time.sleep(1)
                                     break
-                                else:
-                                    start_time = overlapcheck[k][2]
-                                    start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
-                                    print('Overlap detected and start time adjusted for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                        overlapcheck.append([ch_id, start_time, stop_time])
-                        if not skip:
-                            xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
-                            xml_file.write('    <title lang="en">'+name+'</title>'+'\n')
-                            xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
-                            xml_file.write('  </programme>'+'\n')
-                            if noschedule:
-                                noschedule = False
+                            if stop_time <= overlapcheck[k][2]:
+                                skip = True
+                                break
+                            else:
+                                start_time = overlapcheck[k][2]
+                                start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
+                                print('Overlap detected and start time adjusted for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                    overlapcheck.append([ch_id, start_time, stop_time])
+                    if not skip:
+                        xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
+                        xml_file.write('    <title lang="en">'+name+'</title>'+'\n')
+                        xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
+                        xml_file.write('  </programme>'+'\n')
+                        if noschedule:
+                            noschedule = False
             daysdone = daysdone + [day]
         xml_file.write('</tv>')
     if noschedule:
         print('Error in mythrecmaze.py (no schedule data)')
         sys.exit(1)
     #Run mythfilldatabase:
-    subprocess.call('mythfilldatabase --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
+    if showdetails:
+        subprocess.call('mythfilldatabase --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
+    else:
+        print('Running mythfilldatabase')
+        subprocess.call('mythfilldatabase --quiet --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
     pym = mythRecord(mythlanip, mythport)
     chaninfo = pym.GetChannelInfoList(SourceID=mythsourceid, Details='true')
     if chaninfo:
