@@ -6,7 +6,7 @@ Mythrecmaze has been tested using Mythbuntu 16.04 with MythTV 0.28.
 
 New in version 20170528:
 
-Changing the MythTV xmltvid values is now optional and not required.  Mythrecmaze is now compatible with using another guide source with MythTV if the guide entries inserted from Tvmaze matching the recordings are not overwritten by the other guide source.
+Changing the MythTV xmltvid values is no longer required.  Mythrecmaze is now compatible with using another guide source with MythTV if the guide entries inserted from Tvmaze matching the recordings are not overwritten by the other guide source.
 
 Version 20160802 is the last release to support MythTV 0.27.
 
@@ -33,17 +33,12 @@ Guide source option 2:
 4.  Each line in the text file must have two entries separated by a comma.  Do not have any blank lines between the entries.  The first entry must match the current MythTV xmltvid value (not necessarily a number) and correspond to the TVmaze id number as the second entry.  An example  xmltvidmap.csv is shown below.  A few example lines are shown, and a typical file will have many more.
 
 Example entries in  xmltvidmap.csv:
-
+```
 431,3
-
 432,1
-
 433,2
-
 434,4
-
 435,5
-
 439,194
-
 440,85
+```
