@@ -225,8 +225,14 @@ if __name__ == '__main__':
                                 break
                             else:
                                 start_time = overlapcheck[k][2]
-                                start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
-                                print('Overlap detected and start time adjusted for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                try:
+                                    start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
+                                except:
+                                    print('Overlap detected for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    print('Skipping EPG entry for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    skip = True
+                                    break
+                                print('Overlap detected and start time adjusted for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                     overlapcheck.append([ch_id, start_time, stop_time])
                     if not skip:
                         xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
