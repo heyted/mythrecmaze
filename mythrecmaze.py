@@ -213,7 +213,8 @@ if __name__ == '__main__':
                             print('Error in mythrecmaze.py (unexpected schedule sort order)')
                             sys.exit(1)
                         newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [tm]
-                        print('To be recorded: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                        #print('To be recorded: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M")) <--- To be modified
+                        print('To be recorded: ' + name) #<--- To be modified
                 if not day in daysdone:
                     runtime = schedule_dicts[j]['runtime']
                     try:
