@@ -4,7 +4,7 @@ import os, re, sys, requests, subprocess, itertools, configparser, pickle, json,
 from datetime import date, datetime, timedelta, timezone
 
 #Get episode ids, dates and end times for seven days (single token):
-def getICalEpisodes(token):
+def getICalEpisodes(token,utcoffset):
     url = 'http://api.tvmaze.com/ical/followed?token=' + token
     try:
         iCalIcs = requests.get(url).text
@@ -20,11 +20,19 @@ def getICalEpisodes(token):
     for i in range(len(iCalIcs)-200):
         episode = []
         if iCalIcs[i : i + 5] == 'DTEND':
+            if iCalIcs[i + 11 : i + 14] == 'UTC':
+                UTC = True
+            else:
+                UTC = False
             for j in range(1, 200):
                 if iCalIcs[i+j] == ':':
                     day = iCalIcs[i+j+1 : i+j+9]
+                    time = iCalIcs[i+j+10 : i+j+14]
                     if day in days:
-                        time = iCalIcs[i+j+10 : i+j+14]
+                        if UTC:
+                            endtime = datetime.strptime(day+time, '%Y%m%d%H%M') + utcoffset
+                            day = endtime.strftime("%Y%m%d")
+                            time = endtime.strftime("%H%M")
                         if day == days[0] and int(datetime.now().strftime("%H%M")) > int(time):
                             break
                         episode.append(day)
@@ -38,14 +46,16 @@ def getICalEpisodes(token):
                     break
     return episodes
 
-#Get episode ids, dates and end times for seven days:
+#Get episode ids, dates and end times for seven days (all tokens):
 def getICalsEpisodes(tokens):
     if len(tokens) == 0:
         print('Error in getICalsEpisodes (no token provided)')
         sys.exit(1)
+    ts = time.time()
+    utcoffset = (datetime.fromtimestamp(ts) - datetime.utcfromtimestamp(ts))
     episodes = []
     for i in range(len(tokens)):
-        episodes = episodes + getICalEpisodes(tokens[i])
+        episodes = episodes + getICalEpisodes(tokens[i],utcoffset)
     episodes.sort()
     episodes = list(episodes for episodes,_ in itertools.groupby(episodes)) #Remove any duplicates
     return episodes
