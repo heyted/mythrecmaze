@@ -2,13 +2,13 @@
 
 Automatically record the TV shows you follow on TVmaze.com using MythTV.
 
-Mythrecmaze has been tested using Mythbuntu 16.04 with MythTV 0.28.
-
 New in version 20170528:
 
 Changing the MythTV xmltvid values is no longer required.  Mythrecmaze is now compatible with using another guide source with MythTV if the guide entries inserted from Tvmaze matching the recordings are not overwritten by the other guide source.
 
-Version 20160802 is the last release to support MythTV 0.27.
+Notes: 
+
+This program currently works in the USA only, but this could easily be changed.  Mythrecmaze has been tested using Mythbuntu 16.04 with MythTV 0.28.  Version 20160802 is the last release to support MythTV 0.27.   
 
 Usage:
 
