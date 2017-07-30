@@ -20,7 +20,7 @@ def getICalEpisodes(token,utcoffset):
     for i in range(len(iCalIcs)-200):
         episode = []
         if iCalIcs[i : i + 5] == 'DTEND':
-            if iCalIcs[i + 11 : i + 14] == 'UTC':
+            if iCalIcs[i + 11 : i + 14] == 'UTC' or iCalIcs[i : i + 6] == 'DTEND:':
                 UTC = True
             else:
                 UTC = False
