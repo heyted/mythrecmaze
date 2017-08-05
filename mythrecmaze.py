@@ -221,7 +221,12 @@ if __name__ == '__main__':
                         description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
                     except:
                         description = ''
-                    stop_time = start_time + timedelta(minutes=runtime)
+                    try:
+                        stop_time = start_time + timedelta(minutes=runtime)
+                    except TypeError:
+                        print('Unable to determine runtime for: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                        print('Guessing 60 minutes runtime for ' + name)
+                        stop_time = start_time + timedelta(minutes=60)
                     stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
                     skip = False
                     for k in range(len(overlapcheck)):
