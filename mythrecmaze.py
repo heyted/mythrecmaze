@@ -192,13 +192,23 @@ if __name__ == '__main__':
                 day = date.today().strftime("%Y%m%d")
                 scheduleday = day
             for j in range(len(schedule_dicts)):
+                skip = False
                 episodeid = schedule_dicts[j]['id']
-                ch_id = str(schedule_dicts[j]['show']['network']['id'])
-                tm = schedule_dicts[j]['airstamp']
                 name = schedule_dicts[j]['show']['name']
-                start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
-                start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
-                if usingNonMazeChIds:
+                try:
+                    ch_id = str(schedule_dicts[j]['show']['network']['id'])
+                    tm = schedule_dicts[j]['airstamp']
+                    start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
+                    start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
+                except:
+                    print('Incomplete schedule information for ' + name)
+                    print('Skipping EPG entry for ' + name)
+                    skip = True
+                    if i > 0:
+                        if str(episodeid) == newepisodes[i-1][2]:
+                            print('Error in mythrecmaze.py (Incomplete schedule information for show to be recorded)')
+                            sys.exit(1)
+                if usingNonMazeChIds and not skip:
                     if ch_id in channelsMazeInclude:
                         ch_id = channelsMap[channelsMazeInclude.index(ch_id)][0]
                     else:
@@ -207,7 +217,7 @@ if __name__ == '__main__':
                                 print('Skipping TVmaze network id ' + ch_id + ' (not included in xmltvidmap.csv)')
                             channelsMazeSkipped = channelsMazeSkipped + [ch_id]
                         continue
-                if i > 0:
+                if i > 0 and not skip:
                     if str(episodeid) == newepisodes[i-1][2]:
                         if day != scheduleday:
                             print('Error in mythrecmaze.py (unexpected schedule sort order)')
@@ -215,7 +225,7 @@ if __name__ == '__main__':
                         newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [tm]
                         #print('To be recorded: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M")) <--- To be modified
                         print('To be recorded: ' + name) #<--- To be modified
-                if not day in daysdone:
+                if not day in daysdone and not skip:
                     runtime = schedule_dicts[j]['runtime']
                     try:
                         description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
@@ -228,7 +238,6 @@ if __name__ == '__main__':
                         print('Guessing 60 minutes runtime for ' + name)
                         stop_time = start_time + timedelta(minutes=60)
                     stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
-                    skip = False
                     for k in range(len(overlapcheck)):
                         if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
                             if i > 0:
