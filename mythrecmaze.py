@@ -286,16 +286,17 @@ if __name__ == '__main__':
         sys.exit(1)
     for i in range(len(chaninfo)):
         for j in range(len(newepisodes)):
-            if newepisodes[j][3] == chaninfo[i]['XMLTVID']:
-                time = newepisodes[j][4]
-                time = datetime.strptime (time[0:22]+time[23:25], "%Y-%m-%dT%H:%M:%S%z")
-                time = datetime.strftime(time.astimezone(timezone.utc), "%Y-%m-%dT%H:%M:%S")
-                mythchid = chaninfo[i]['ChanId']
-                recRule = pym.GetRecordSchedule(ChanId=mythchid, StartTime=time)
-                if recRule:
-                    recRule = recRule['RecRule']
-                    recRule['Type'] = 'Single Record'
-                    recRule['Station'] = recRule['CallSign']
-                    pym.AddRecordSchedule(recRule)
-                else:
-                    print('Error: No record schedule found')
+            if len(newepisodes[j]) > 3:
+                if newepisodes[j][3] == chaninfo[i]['XMLTVID']:
+                    time = newepisodes[j][4]
+                    time = datetime.strptime (time[0:22]+time[23:25], "%Y-%m-%dT%H:%M:%S%z")
+                    time = datetime.strftime(time.astimezone(timezone.utc), "%Y-%m-%dT%H:%M:%S")
+                    mythchid = chaninfo[i]['ChanId']
+                    recRule = pym.GetRecordSchedule(ChanId=mythchid, StartTime=time)
+                    if recRule:
+                        recRule = recRule['RecRule']
+                        recRule['Type'] = 'Single Record'
+                        recRule['Station'] = recRule['CallSign']
+                        pym.AddRecordSchedule(recRule)
+                    else:
+                        print('Error: No record schedule found')
