@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">{{ site.title | default: site.github.repository_name }}</h1>
+      <h2 class="project-tagline">{{ site.description | default: site.github.project_tagline }}</h2>
+      {% if site.github.is_project_page %}
+        <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
+      {% endif %}
+      {% if site.show_downloads %}
+        <a href="{{ site.github.zip_url }}" class="btn">Download .zip</a>
+        <a href="{{ site.github.tar_url }}" class="btn">Download .tar.gz</a>
+      {% endif %}
+    </section>
+    <section class="main-content">
+<h1 class="western" style="font-variant: normal; letter-spacing: normal; font-style: normal">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><b>Mythrecmaze</b></font></font></h1>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Automatically
+record the TV shows you follow on TVmaze.com using MythTV.</font></font></font></p>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Notes:</font></font></font></p>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Changing
+the MythTV xmltvid values is not required. Mythrecmaze is compatible
+with using another guide source with MythTV if the guide entries
+inserted from Tvmaze matching the recordings are not overwritten by
+the other guide source.</font></font></font></p>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">This
+program currently works in the USA only, but this could easily be
+changed. Mythrecmaze has been tested using Mythbuntu 16.04 with
+MythTV 0.28. Version 20160802 is the last release to support MythTV
+0.27.</font></font></font></p>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Usage:</font></font></font></p>
+<ol>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">If
+	mythrecmaze has previously been installed, delete the file named
+	&quot;mythrecmaze.cfg.&quot;</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Click
+	on “releases” above, and select the latest version.</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Download
+	and extract the files to your home folder.</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">If
+	you start the PC daily, edit the MythTV autostart command using the
+	line in autostart.txt, or run the program using some other method.</font></font></font></p>
+</ol>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Guide
+source option 1: Edit the xmltvid values in the channel information
+section of mythweb/settings to match TVmaze id values.</font></font></font></p>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Guide
+source option 2:</font></font></font></p>
+<ol>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">The
+	xmltvid values for a guide source other than using TVmaze as a guide
+	source should already be configured, and there should be an xmltvid
+	for each channel.</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Create
+	a text file named “xmltvidmap.csv” which will match your xmltvid
+	values to the corresponding TVmaze id values. If xmltvidmap.csv does
+	not exist, option one must be used. If it does exist, option two
+	must be used.</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Place
+	xmltvidmap.csv in your home folder.</font></font></font></p>
+	<li/>
+<p style="margin-top: 0.17in; margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+	<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Each
+	line in the text file must have two entries separated by a comma. Do
+	not have any blank lines between the entries. The first entry must
+	match the current MythTV xmltvid value (not necessarily a number)
+	and correspond to the TVmaze id number as the second entry. An
+	example xmltvidmap.csv is shown below. A few example lines are
+	shown, and a typical file will have many more.</font></font></font></p>
+</ol>
+<p style="margin-bottom: 0.17in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; orphans: 2; widows: 2">
+<font color="#24292e"><font face="apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol"><font size="3" style="font-size: 12pt">Example
+entries in xmltvidmap.csv:</font></font></font></p>
+<pre class="western" style="background: #f6f8fa; border: none; padding: 0in; line-height: 145%; orphans: 2; widows: 2"><span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">431,3</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">432,1</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">433,2</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">434,4</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">435,5</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">439,194</span></span></span></span></span></font></font></font></span></code>
+<span style="display: inline-block; border: none; padding: 0in"><span style="font-variant: normal"><font color="#24292e"><font face="SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace"><font size="2" style="font-size: 9pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal"><span style="background: transparent"><code class="western">440,85</span></span></span></span></span></font></font></font></span></code></pre><p style="margin-bottom: 0in; line-height: 100%">
+<br/>
+</p>
+
+      <footer class="site-footer">
+        {% if site.github.is_project_page %}
+          <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+        {% endif %}
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </section>
+  </body>
+</html>
