@@ -12,4 +12,4 @@ Changing the MythTV xmltvid values is not required. Mythrecmaze is compatible wi
 
 This program currently works in the USA only, but this could easily be changed.
 
-Mythrecmaze has been tested using Mythbuntu 16.04 with MythTV 0.28. Version 20160802 is the last release to support MythTV 0.27.
+Mythrecmaze has been tested using Mythbuntu 16.04 with MythTV 28 and 29. Version 20160802 is the last release to support MythTV 27.
