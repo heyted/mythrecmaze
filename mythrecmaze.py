@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time, csv
+import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time, csv, logging
 from datetime import date, datetime, timedelta, timezone
 
 #Get episode ids, dates and end times for seven days (single token):
@@ -9,7 +9,7 @@ def getICalEpisodes(token,utcoffset):
     try:
         iCalIcs = requests.get(url).text
     except requests.exceptions.RequestException as e:
-        print(e)
+        logging.info(e)
         sys.exit(1)
     today = date.today()
     days = [today.strftime("%Y%m%d")]
@@ -49,7 +49,7 @@ def getICalEpisodes(token,utcoffset):
 #Get episode ids, dates and end times for seven days (all tokens):
 def getICalsEpisodes(tokens):
     if len(tokens) == 0:
-        print('Error in getICalsEpisodes (no token provided)')
+        logging.info(' Error in getICalsEpisodes (no API key provided)')
         sys.exit(1)
     ts = time.time()
     utcoffset = (datetime.fromtimestamp(ts) - datetime.utcfromtimestamp(ts))
@@ -68,7 +68,7 @@ def getSchedule(url):
     try:
         schedule_json_wa = requests.get(url).text
     except requests.exceptions.RequestException as e:
-        print(e)
+        logging.info(e)
         sys.exit(1)
     schedule_json = removeNonAscii(schedule_json_wa)
     return json.loads(schedule_json)
@@ -94,85 +94,154 @@ def isbadipv4(s):
     try: return not all(0<=int(p)<256 for p in pieces)
     except ValueError: return True
 
-if __name__ == '__main__':
-    print('Visit www.tvmaze.com')
-    #Read settings from file or prompt user:
+def main():
     homepath = os.path.expanduser('~')
+    if os.path.isfile(homepath+'/.mythrecmaze/mythrecmaze0.log'):
+        os.rename(homepath+'/.mythrecmaze/mythrecmaze0.log',homepath+'/.mythrecmaze/mythrecmaze1.log')
+    if not os.path.isdir(homepath + '/.mythrecmaze'):
+        os.mkdir(homepath + '/.mythrecmaze')
+    try:
+        logging.basicConfig(format='%(levelname)s:%(message)s', filename=homepath+'/.mythrecmaze/mythrecmaze0.log', filemode='w', level=logging.INFO)
+    except IOError:
+        logging.basicConfig(format='%(levelname)s:%(message)s', filename='/tmp/mythrecmaze0.log', filemode='w', level=logging.INFO)
+    logging.info(" " + str(datetime.now()) + " Starting mythrecmaze.py")
+    if not os.path.isfile("/opt/mythrecmaze/userhomepath.dat"):
+        logging.info(" Aborting (Required file userhomepath.dat not found)")
+        sys.exit(0)
     config = configparser.RawConfigParser()
-    if os.path.isfile(homepath + '/mythrecmaze.cfg'):
-        config.read(homepath + '/mythrecmaze.cfg')
+    config.read('/opt/mythrecmaze/userhomepath.dat')
+    uhomepath = config.get('userhomepath', 'uhp')
+    mythlanip = False
+    #Display GUI if ran by user:
+    if not 'mythtv' in homepath:
+        while True:
+            try:
+                option = subprocess.check_output("zenity --list --title='Mythrecmaze' --text='Select Option' --column='0' \
+                'Change settings' \
+                'Check for shows to record now' \
+                'View log' \
+                'Exit Mythrecmaze' --hide-header \
+                --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+                option = option.strip().decode('utf-8')
+            except subprocess.CalledProcessError:
+                logging.info(' Exiting (Options dialog canceled)')
+                sys.exit(0)
+            if option == 'Exit Mythrecmaze':
+                logging.info(' Exiting (User selected exit)')
+                sys.exit(0)
+            if option == 'Change settings':
+                try:
+                    cfg = subprocess.check_output("zenity --forms --title='Mythrecmaze' --text='Configuration' \
+                    --add-entry='MythTV backend server IP address (example: 192.168.1.50)' \
+                    --add-entry='MythTV backend web server port (default: 6544)' \
+                    --add-entry='MythTV channel source id (default: 1)' \
+                    --add-entry='TVmaze API key (enter single API key)' \
+                    --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+                    cfg = cfg.strip().decode('utf-8').split("|")
+                except subprocess.CalledProcessError:
+                    continue
+                mythlanip = cfg[0]
+                if isbadipv4(mythlanip):
+                    logging.info(' Aborting (invalid MythTV backend server IP address)')
+                    sys.exit(0)
+                mythport = cfg[1]
+                if len(mythport) == 0:
+                    mythport = '6544'
+                elif not mythport.isdigit():
+                    logging.info(' Aborting (invalid MythTV backend web server port number)')
+                    sys.exit(0)
+                mythsourceid = cfg[2]
+                if len(mythsourceid) == 0:
+                    mythsourceid = '1'
+                elif not mythsourceid.isdigit():
+                    logging.info(' Aborting (invalid MythTV channel source id number)')
+                    sys.exit(0)
+                mazetokens = [cfg[3]]
+                if len(mazetokens) == 0:
+                    logging.info(' Aborting (TVmaze API key is required)')
+                    sys.exit(0)
+                while True:
+                    try:
+                        mazetoken = subprocess.check_output("zenity --forms --title='Mythrecmaze' \
+                        --text='Enter additional TVmaze API key or leave blank if none' \
+                        --add-entry='TVmaze API key (enter single API key)' \
+                        --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+                        mazetoken = mazetoken.strip().decode('utf-8')
+                    except subprocess.CalledProcessError:
+                        break
+                    if len(mazetoken) == 0:
+                        break
+                    else:
+                        mazetokens.append(mazetoken)
+                config.add_section('mythrecmazesettings')
+                config.set('mythrecmazesettings', 'mythlanip', mythlanip)
+                config.set('mythrecmazesettings', 'mythport', mythport)
+                config.set('mythrecmazesettings', 'mythsourceid', mythsourceid)
+                config.set('mythrecmazesettings', 'mazetokens', ','.join(mazetokens))
+                config.set('mythrecmazesettings', 'showdetails', 'False')
+                showdetails = False
+                with open(homepath + '/.mythrecmaze/mythrecmaze.cfg', 'w') as configfile:
+                    config.write(configfile)
+            if option == 'View log':
+                viewedlog = False
+                if os.path.isfile(homepath + '/.mythrecmaze/mythrecmaze1.log'):
+                    subprocess.call("zenity --text-info --title='Mythrecmaze Previous Manual Run Log' --width=600 \
+                    --height=500 --filename=" + homepath + "/.mythrecmaze/mythrecmaze1.log \
+                    --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+                    viewedlog = True
+                if os.path.isfile('/home/mythtv/.mythrecmaze/mythrecmaze0.log'):
+                    subprocess.call("zenity --text-info --title='Mythrecmaze Previous Automatic Run Log' --width=600 \
+                    --height=500 --filename=/home/mythtv/.mythrecmaze/mythrecmaze0.log \
+                    --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+                    viewedlog = True
+                if not viewedlog:
+                    subprocess.call("zenity --info --title='Mythrecmaze' --text='No log file found' --width=150 \
+                    --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+            if option == 'Check for shows to record now':
+                break
+    if os.path.isfile(uhomepath + '/.mythrecmaze/mythrecmaze.cfg') and not mythlanip:
+        config.read(uhomepath + '/.mythrecmaze/mythrecmaze.cfg')
         mythlanip = config.get('mythrecmazesettings', 'mythlanip')
         mythport = config.get('mythrecmazesettings', 'mythport')
         mythsourceid = config.get('mythrecmazesettings', 'mythsourceid')
         mazetokens = config.get('mythrecmazesettings', 'mazetokens').split(',')
         showdetails = config.getboolean('mythrecmazesettings', 'showdetails')
-    else:
-        mythlanip = input('Enter MythTV backend server IP address (example: 192.168.1.50) --> ')
-        if isbadipv4(mythlanip):
-            print('Aborting (invalid MythTV backend server IP address)')
-            sys.exit(1)
-        mythport = input('Enter MythTV backend web server port (default: 6544) --> ')
-        if len(mythport) == 0:
-            mythport = '6544'
-        elif not mythport.isdigit():
-            print('Aborting (invalid MythTV backend web server port number)')
-            sys.exit(1)
-        mythsourceid = input('Enter MythTV channel source id (default: 1) --> ')
-        if len(mythsourceid) == 0:
-            mythsourceid = '1'
-        elif not mythsourceid.isdigit():
-            print('Aborting (invalid MythTV channel source id number)')
-            sys.exit(1)
-        mazetokens = [input('Enter single TVmaze token --> ')]
-        if len(mazetokens) == 0:
-            print('Aborting (TVmaze token is required)')
-            sys.exit(1)
-        while True:
-            mazetoken = input('Enter another TVmaze token or press enter if done --> ')
-            if len(mazetoken) == 0:
-                break
-            else:
-                mazetokens.append(mazetoken)
-        config.add_section('mythrecmazesettings')
-        config.set('mythrecmazesettings', 'mythlanip', mythlanip)
-        config.set('mythrecmazesettings', 'mythport', mythport)
-        config.set('mythrecmazesettings', 'mythsourceid', mythsourceid)
-        config.set('mythrecmazesettings', 'mazetokens', ','.join(mazetokens))
-        config.set('mythrecmazesettings', 'showdetails', 'False')
-        showdetails = False
-        with open(homepath + '/mythrecmaze.cfg', 'w') as configfile:
-            config.write(configfile)
-    print('Opening TVmaze connection')
+    if not mythlanip:
+        logging.info(" Aborting (Required file mythrecmaze.cfg not found)")
+        if not 'mythtv' in homepath:
+            subprocess.call("zenity --info --title='Mythrecmaze' --text='Aborting (Unable to retreive settings)' --width=300 \
+            --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+        sys.exit(0)
+    logging.info(' Opening TVmaze connection')
     episodes = getICalsEpisodes(mazetokens)
+    newepisodes = episodes
     if len(episodes) > 0:
-        if os.path.isfile(homepath + '/.mythrecmaze.pickle'):
-            with open(homepath + '/.mythrecmaze.pickle', 'rb') as f:
+        if os.path.isfile(homepath + '/.mythrecmaze/mythrecmaze.pickle'):
+            with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'rb') as f:
                 prevepisodes = pickle.load(f)
-            with open(homepath + '/.mythrecmaze.pickle', 'wb') as f:
-                pickle.dump(episodes, f, pickle.HIGHEST_PROTOCOL)
             #Episodes not in previous episodes list:
-            newepisodes = list(itertools.compress(episodes, (not x in prevepisodes for x in episodes)))
-        else:
-            with open(homepath + '/.mythrecmaze.pickle', 'wb') as f:
-                pickle.dump(episodes, f, pickle.HIGHEST_PROTOCOL)
-            if not os.path.isfile(homepath + '/.mythrecmaze.pickle'):
-                print('Error in mythrecmaze.py (unable to save episodes list)')
-                sys.exit(1)
-            newepisodes = episodes
+            newepisodes = list(itertools.compress(newepisodes, (not x in prevepisodes for x in newepisodes)))
+        if os.path.isfile(homepath + '/home/mythtv/.mythrecmaze/mythrecmaze.pickle'):
+            with open(homepath + '/home/mythtv/.mythrecmaze/mythrecmaze.pickle', 'rb') as f:
+                prevepisodes = pickle.load(f)
+            newepisodes = list(itertools.compress(newepisodes, (not x in prevepisodes for x in newepisodes)))
+        with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'wb') as f:
+            pickle.dump(episodes, f, pickle.HIGHEST_PROTOCOL)
     else:
         newepisodes = []
-    print('Downloading TVmaze schedule')
+    logging.info(' Downloading TVmaze schedule')
     noschedule = True
     usingNonMazeChIds = False
-    if os.path.isfile(homepath + '/xmltvidmap.csv'):
+    if os.path.isfile(uhomepath + '/xmltvidmap.csv'):
         usingNonMazeChIds = True
-        with open('xmltvidmap.csv', 'r') as f:
+        with open(uhomepath + '/xmltvidmap.csv', 'r') as f:
             reader = csv.reader(f)
             channelsMap = list(reader)
         channelsMazeInclude = []
         for i in range(len(channelsMap)):
             channelsMazeInclude = channelsMazeInclude + [channelsMap[i][1]]
-    with open('xmltv.xml', 'w') as xml_file:
+    #Write out schedule for each unique day in newepisodes and add network id and start time to new episodes list:
+    with open('/tmp/xmltvmrm.xml', 'w') as xml_file:
         xml_file.write('<?xml version="1.0" encoding="ISO-8859-1"?>'+'\n')
         xml_file.write('<!DOCTYPE tv SYSTEM "xmltv.dtd">'+'\n')
         xml_file.write('\n')
@@ -180,7 +249,7 @@ if __name__ == '__main__':
         schedule_dicts = getSchedule('http://api.tvmaze.com/schedule')#Always get today's schedule
         daysdone = []
         channelsMazeSkipped = []
-        #Write out schedule for each unique day in newepisodes and add network id and start time to new episodes list:
+        torecord = 'To be recorded: \n'
         for i in range(len(newepisodes)+1):
             overlapcheck = []
             if i > 0:
@@ -201,12 +270,12 @@ if __name__ == '__main__':
                     start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
                     start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
                 except:
-                    print('Incomplete schedule information for ' + name)
-                    print('Skipping EPG entry for ' + name)
+                    logging.info(' Incomplete schedule information for ' + name)
+                    logging.info(' Skipping EPG entry for ' + name)
                     skip = True
                     if i > 0:
                         if str(episodeid) == newepisodes[i-1][2]:
-                            print('Error in mythrecmaze.py (Incomplete schedule information for show to be recorded)')
+                            logging.info(' Error in mythrecmaze.py (Incomplete schedule information for show to be recorded)')
                             sys.exit(1)
                 if usingNonMazeChIds and not skip:
                     if ch_id in channelsMazeInclude:
@@ -214,17 +283,16 @@ if __name__ == '__main__':
                     else:
                         if not ch_id in channelsMazeSkipped:
                             if showdetails:
-                                print('Skipping TVmaze network id ' + ch_id + ' (not included in xmltvidmap.csv)')
+                                logging.info(' Skipping TVmaze network id ' + ch_id + ' (not included in xmltvidmap.csv)')
                             channelsMazeSkipped = channelsMazeSkipped + [ch_id]
                         continue
                 if i > 0 and not skip:
                     if str(episodeid) == newepisodes[i-1][2]:
                         if day != scheduleday:
-                            print('Error in mythrecmaze.py (unexpected schedule sort order)')
+                            logging.info(' Error in mythrecmaze.py (unexpected schedule sort order)')
                             sys.exit(1)
+                        torecord = torecord+name+' on '+newepisodes[i-1][0][4:6]+'/'+newepisodes[i-1][0][6:9]+'/'+newepisodes[i-1][0][0:4]+'\n'
                         newepisodes[i-1] = newepisodes[i-1] + [ch_id] + [tm]
-                        #print('To be recorded: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M")) <--- To be modified
-                        print('To be recorded: ' + name) #<--- To be modified
                 if not day in daysdone and not skip:
                     runtime = schedule_dicts[j]['runtime']
                     try:
@@ -234,15 +302,15 @@ if __name__ == '__main__':
                     try:
                         stop_time = start_time + timedelta(minutes=runtime)
                     except TypeError:
-                        print('Unable to determine runtime for: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                        print('Guessing 60 minutes runtime for ' + name)
+                        logging.info(' Unable to determine runtime for: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                        logging.info(' Guessing 60 minutes runtime for ' + name)
                         stop_time = start_time + timedelta(minutes=60)
                     stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
                     for k in range(len(overlapcheck)):
                         if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
                             if i > 0:
                                 if str(episodeid) == newepisodes[i-1][2]:
-                                    print('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    logging.info('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
                                     time.sleep(1)
                                     break
                             if stop_time <= overlapcheck[k][2]:
@@ -253,11 +321,11 @@ if __name__ == '__main__':
                                 try:
                                     start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
                                 except:
-                                    print('Overlap detected for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                                    print('Skipping EPG entry for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    logging.info(' Overlap detected for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    logging.info(' Skipping EPG entry for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                                     skip = True
                                     break
-                                print('Overlap detected and start time adjusted for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                logging.info(' Overlap detected and start time adjusted for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                     overlapcheck.append([ch_id, start_time, stop_time])
                     if not skip:
                         xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
@@ -269,20 +337,27 @@ if __name__ == '__main__':
             daysdone = daysdone + [day]
         xml_file.write('</tv>')
     if noschedule:
-        print('Error in mythrecmaze.py (no schedule data)')
+        logging.info(' Error in mythrecmaze.py (no schedule data)')
         sys.exit(1)
-    #Run mythfilldatabase:
-    if showdetails:
-        subprocess.call('mythfilldatabase --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
+    if not 'mythtv' in homepath:
+        if len(torecord) > 17:
+            subprocess.call("zenity --info --title='Mythrecmaze' --text='" + torecord + "' --width=300 \
+            --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
+        else:
+            subprocess.call("zenity --info --title='Mythrecmaze' --text='Nothing new found to record' --width=300 \
+            --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
     else:
-        print('Running mythfilldatabase')
-        subprocess.call('mythfilldatabase --quiet --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ./xmltv.xml', shell=True)
+        if len(torecord) > 17:
+            logging.info(' ' + torecord)
+    #Run mythfilldatabase:
+    logging.info(' Running mythfilldatabase')
+    subprocess.call('mythfilldatabase --quiet --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile /tmp/xmltvmrm.xml', shell=True)
     pym = mythRecord(mythlanip, mythport)
     chaninfo = pym.GetChannelInfoList(SourceID=mythsourceid, Details='true')
     if chaninfo:
         chaninfo = chaninfo['ChannelInfoList']['ChannelInfos']
     else:
-        print('Error in mythrecmaze.py (unable to fetch channel information)')
+        logging.info(' Error in mythrecmaze.py (unable to fetch channel information)')
         sys.exit(1)
     for i in range(len(chaninfo)):
         for j in range(len(newepisodes)):
@@ -299,4 +374,10 @@ if __name__ == '__main__':
                         recRule['Station'] = recRule['CallSign']
                         pym.AddRecordSchedule(recRule)
                     else:
-                        print('Error: No record schedule found')
+                        logging.info(' Error: No record schedule found')
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        logging.exception("Fatal error in main function")
