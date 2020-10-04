@@ -12,4 +12,4 @@ Changing the MythTV xmltvid values is not required.  Mythrecmaze is compatible w
 
 TVmaze is not limited to the USA, but this program currently works in the USA only.
 
-Mythrecmaze has been tested using Ubuntu and Xubuntu with MythTV versions 28, 29 and 30.
+Mythrecmaze has been tested using Ubuntu and Xubuntu with MythTV versions 28, 29, 30 and 31.
