@@ -25,7 +25,20 @@ if __name__ == '__main__':
             print('No changes made')
             print('Exiting')
             sys.exit(0)
-        homepath = os.path.expanduser('~')
+        has_homepath = os.getcwd()
+        home_position = has_homepath.find('home/')
+        if home_position < 0:
+            print('Install script must be run from subdirectory in home directory')
+            print('No changes made')
+            print('Exiting')
+            sys.exit(0)
+        else:
+            homepath = has_homepath[0:home_position+5]
+            for i in range(len(has_homepath)-home_position-5):
+                if has_homepath[i+home_position+5] == '/':
+                    break
+                else:
+                    homepath = homepath + has_homepath[i+home_position+5]
         if os.path.isdir('/opt/mythrecmaze'):
             shutil.rmtree('/opt/mythrecmaze')
         os.mkdir('/opt/mythrecmaze')
