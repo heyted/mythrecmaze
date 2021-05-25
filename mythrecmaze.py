@@ -241,7 +241,11 @@ def main():
         for i in range(len(channelsMap)):
             channelsMazeInclude = channelsMazeInclude + [channelsMap[i][1]]
     #Write out schedule for each unique day in newepisodes and add network id and start time to new episodes list:
-    with open('/tmp/xmltvmrm.xml', 'w') as xml_file:
+    if 'mythtv' in homepath:
+        tmp_xml_file = '/tmp/xmltvmrm_m.xml'
+    else:
+        tmp_xml_file = '/tmp/xmltvmrm.xml'
+    with open(tmp_xml_file, 'w') as xml_file:
         xml_file.write('<?xml version="1.0" encoding="ISO-8859-1"?>'+'\n')
         xml_file.write('<!DOCTYPE tv SYSTEM "xmltv.dtd">'+'\n')
         xml_file.write('\n')
@@ -330,7 +334,17 @@ def main():
                     if not skip:
                         xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
                         xml_file.write('    <title lang="en">'+name+'</title>'+'\n')
+                        xml_file.write('    <sub-title lang="en">'+schedule_dicts[j]['name']+'</sub-title>'+'\n')
                         xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
+                        genres = schedule_dicts[j]['show']['genres']
+                        if len(genres) > 0:
+                            xml_file.write('    <categories>'+'\n')
+                            for l in range(len(genres)):
+                                xml_file.write('      <category type="genre" name="'+genres[l]+'"/>'+'\n')
+                            xml_file.write('    </categories>'+'\n')
+                        else:
+                            xml_file.write('    <category lang="en">Show</category>'+'\n')
+                        xml_file.write('    <inetref>tvmaze.py_'+schedule_dicts[j]['show']['id']+'</inetref>'+'\n')
                         xml_file.write('  </programme>'+'\n')
                         if noschedule:
                             noschedule = False
@@ -351,7 +365,7 @@ def main():
             logging.info(' ' + torecord)
     #Run mythfilldatabase:
     logging.info(' Running mythfilldatabase')
-    subprocess.call('mythfilldatabase --quiet --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile /tmp/xmltvmrm.xml', shell=True)
+    subprocess.call('mythfilldatabase --quiet --refresh 1 --file --sourceid ' + mythsourceid + ' --xmlfile ' + tmp_xml_file, shell=True)
     pym = mythRecord(mythlanip, mythport)
     chaninfo = pym.GetChannelInfoList(SourceID=mythsourceid, Details='true')
     if chaninfo:
