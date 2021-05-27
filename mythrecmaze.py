@@ -344,7 +344,7 @@ def main():
                             xml_file.write('    </categories>'+'\n')
                         else:
                             xml_file.write('    <category lang="en">Show</category>'+'\n')
-                        xml_file.write('    <inetref>tvmaze.py_'+schedule_dicts[j]['show']['id']+'</inetref>'+'\n')
+                        xml_file.write('    <inetref>tvmaze.py_'+str(schedule_dicts[j]['show']['id'])+'</inetref>'+'\n')
                         xml_file.write('  </programme>'+'\n')
                         if noschedule:
                             noschedule = False
