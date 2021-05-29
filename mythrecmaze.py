@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 
 #Get episode ids, dates and end times for seven days (single token):
 def getICalEpisodes(token,utcoffset):
-    url = 'http://api.tvmaze.com/ical/followed?token=' + token
+    url = 'https://api.tvmaze.com/ical/followed?token=' + token
     try:
         iCalIcs = requests.get(url).text
     except requests.exceptions.RequestException as e:
@@ -250,7 +250,7 @@ def main():
         xml_file.write('<!DOCTYPE tv SYSTEM "xmltv.dtd">'+'\n')
         xml_file.write('\n')
         xml_file.write('<tv source-info-name="TVmaze" generator-info-name="mythrecmaze.py">'+'\n')
-        schedule_dicts = getSchedule('http://api.tvmaze.com/schedule')#Always get today's schedule
+        schedule_dicts = getSchedule('https://api.tvmaze.com/schedule')#Always get today's schedule
         daysdone = []
         channelsMazeSkipped = []
         torecord = 'To be recorded: \n'
@@ -260,7 +260,7 @@ def main():
                 day = newepisodes[i-1][0]
                 if not day in daysdone:
                     scheduleday = day
-                    schedule_dicts = getSchedule('http://api.tvmaze.com/schedule?date='+day[0:4]+'-'+day[4:6]+'-'+day[6:8])
+                    schedule_dicts = getSchedule('https://api.tvmaze.com/schedule?date='+day[0:4]+'-'+day[4:6]+'-'+day[6:8])
             else:
                 day = date.today().strftime("%Y%m%d")
                 scheduleday = day
@@ -338,13 +338,9 @@ def main():
                         xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
                         genres = schedule_dicts[j]['show']['genres']
                         if len(genres) > 0:
-                            xml_file.write('    <categories>'+'\n')
                             for l in range(len(genres)):
-                                xml_file.write('      <category type="genre" name="'+genres[l]+'"/>'+'\n')
-                            xml_file.write('    </categories>'+'\n')
-                        else:
-                            xml_file.write('    <category lang="en">Show</category>'+'\n')
-                        xml_file.write('    <inetref>tvmaze.py_'+str(schedule_dicts[j]['show']['id'])+'</inetref>'+'\n')
+                                xml_file.write('    <category lang="en">'+genres[l]+'</category>'+'\n')
+                        xml_file.write('    <category lang="en">Show</category>'+'\n')
                         xml_file.write('  </programme>'+'\n')
                         if noschedule:
                             noschedule = False
