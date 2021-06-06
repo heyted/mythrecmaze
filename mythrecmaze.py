@@ -3,7 +3,7 @@
 import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time, csv, logging
 from datetime import date, datetime, timedelta, timezone
 
-#Get episode ids, dates and end times for seven days (single token):
+#Get episode ids, dates and start times for seven days (single token):
 def getICalEpisodes(token,utcoffset):
     url = 'https://api.tvmaze.com/ical/followed?token=' + token
     try:
@@ -19,34 +19,28 @@ def getICalEpisodes(token,utcoffset):
     episodes = []
     for i in range(len(iCalIcs)-200):
         episode = []
-        if iCalIcs[i : i + 5] == 'DTEND':
-            if iCalIcs[i + 11 : i + 14] == 'UTC' or iCalIcs[i : i + 6] == 'DTEND:':
-                UTC = True
-            else:
-                UTC = False
-            for j in range(1, 200):
-                if iCalIcs[i+j] == ':':
-                    day = iCalIcs[i+j+1 : i+j+9]
-                    time = iCalIcs[i+j+10 : i+j+14]
-                    if day in days:
-                        if UTC:
-                            endtime = datetime.strptime(day+time, '%Y%m%d%H%M') + utcoffset
-                            day = endtime.strftime("%Y%m%d")
-                            time = endtime.strftime("%H%M")
-                        if day == days[0] and int(datetime.now().strftime("%H%M")) > int(time):
-                            break
-                        episode.append(day)
-                        episode.append(time)
-                if iCalIcs[i+j : i+j+8] == 'episodes' and len(episode) > 0:
-                    for k in range(25,10,-1):
-                        if iCalIcs[i+j+9 : i+j+k].isdigit():
-                            episode.append(iCalIcs[i+j+9 : i+j+k])
-                            episodes.append(episode)
-                            break
+        if iCalIcs[i : i + 8] == 'DTSTART:':
+            day = iCalIcs[i+8 : i+16]
+            time = iCalIcs[i+17 : i+21]
+            if day in days:
+                stime = datetime.strptime(day+time, '%Y%m%d%H%M') + utcoffset
+                day = stime.strftime("%Y%m%d")
+                time = stime.strftime("%H%M")
+                if day == days[0] and int(datetime.now().strftime("%H%M")) > int(time):
                     break
+                episode.append(day)
+                episode.append(time)
+                for j in range(1, 200):
+                    if iCalIcs[i+j : i+j+8] == 'episodes' and len(episode) > 0:
+                        for k in range(25,10,-1):
+                            if iCalIcs[i+j+9 : i+j+k].isdigit():
+                                episode.append(iCalIcs[i+j+9 : i+j+k])
+                                episodes.append(episode)
+                                break
+                        break
     return episodes
 
-#Get episode ids, dates and end times for seven days (all tokens):
+#Get episode ids, dates and start times for seven days (all tokens):
 def getICalsEpisodes(tokens):
     if len(tokens) == 0:
         logging.info(' Error in getICalsEpisodes (no API key provided)')
