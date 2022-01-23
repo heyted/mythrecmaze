@@ -211,6 +211,7 @@ def main():
     logging.info(' Opening TVmaze connection')
     episodes = getICalsEpisodes(mazetokens)
     newepisodes = episodes
+    #Skip episodes prevoiusly processed (do all if ran manually):
     if len(episodes) > 0 and 'mythtv' in homepath:
         if os.path.isfile(homepath + '/.mythrecmaze/mythrecmaze.pickle'):
             with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'rb') as f:
@@ -260,8 +261,8 @@ def main():
             for j in range(len(schedule_dicts)):
                 skip = True
                 episodeid = schedule_dicts[j]['id']
-                for k in range(len(newepisodes)):
-                    if str(episodeid) == newepisodes[k][2]:
+                for k in range(len(episodes)):
+                    if str(episodeid) == episodes[k][2]:
                         skip = False
                         break
                 if skip:
@@ -329,12 +330,12 @@ def main():
                         xml_file.write('  </programme>'+'\n')
                         if noschedule:
                             noschedule = False
-            # Guide data other than new episodes to record:
+            # Guide data other than episodes to record:
             for j in range(len(schedule_dicts)):
                 skip = False
                 episodeid = schedule_dicts[j]['id']
-                for k in range(len(newepisodes)):
-                    if str(episodeid) == newepisodes[k][2]:
+                for k in range(len(episodes)):
+                    if str(episodeid) == episodes[k][2]:
                         skip = True
                         break
                 if skip:
