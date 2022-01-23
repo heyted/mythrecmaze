@@ -3,7 +3,7 @@
 import os, re, sys, requests, subprocess, itertools, configparser, pickle, json, time, csv, logging
 from datetime import date, datetime, timedelta, timezone
 
-#Get episode ids, dates and start times for seven days (single token):
+#Get episode ids, dates and start times for seven days minimum (single token):
 def getICalEpisodes(token,utcoffset):
     url = 'https://api.tvmaze.com/ical/followed?token=' + token
     try:
@@ -13,7 +13,7 @@ def getICalEpisodes(token,utcoffset):
         sys.exit(1)
     today = date.today()
     days = [today.strftime("%Y%m%d")]
-    for i in range(1, 7):
+    for i in range(1, 8):
         day = today + timedelta(days=i)
         days.append(day.strftime("%Y%m%d"))
     episodes = []
@@ -26,8 +26,10 @@ def getICalEpisodes(token,utcoffset):
                 stime = datetime.strptime(day+time, '%Y%m%d%H%M') + utcoffset
                 day = stime.strftime("%Y%m%d")
                 time = stime.strftime("%H%M")
+                if int(day) < int(days[0]):
+                    continue
                 if day == days[0] and int(datetime.now().strftime("%H%M")) > int(time):
-                    break
+                    continue
                 episode.append(day)
                 episode.append(time)
                 for j in range(1, 200):
@@ -40,7 +42,7 @@ def getICalEpisodes(token,utcoffset):
                         break
     return episodes
 
-#Get episode ids, dates and start times for seven days (all tokens):
+#Get episode ids, dates and start times for seven days minimum (all tokens):
 def getICalsEpisodes(tokens):
     if len(tokens) == 0:
         logging.info(' Error in getICalsEpisodes (no API key provided)')
@@ -106,7 +108,7 @@ def main():
     config.read('/opt/mythrecmaze/userhomepath.dat')
     uhomepath = config.get('userhomepath', 'uhp')
     mythlanip = False
-    #Display GUI if ran by user:
+    #Display GUI if ran manually by user:
     if not 'mythtv' in homepath:
         while True:
             try:
@@ -209,15 +211,11 @@ def main():
     logging.info(' Opening TVmaze connection')
     episodes = getICalsEpisodes(mazetokens)
     newepisodes = episodes
-    if len(episodes) > 0:
+    if len(episodes) > 0 and 'mythtv' in homepath:
         if os.path.isfile(homepath + '/.mythrecmaze/mythrecmaze.pickle'):
             with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'rb') as f:
                 prevepisodes = pickle.load(f)
             #Episodes not in previous episodes list:
-            newepisodes = list(itertools.compress(newepisodes, (not x in prevepisodes for x in newepisodes)))
-        if os.path.isfile(homepath + '/home/mythtv/.mythrecmaze/mythrecmaze.pickle'):
-            with open(homepath + '/home/mythtv/.mythrecmaze/mythrecmaze.pickle', 'rb') as f:
-                prevepisodes = pickle.load(f)
             newepisodes = list(itertools.compress(newepisodes, (not x in prevepisodes for x in newepisodes)))
         with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'wb') as f:
             pickle.dump(episodes, f, pickle.HIGHEST_PROTOCOL)
@@ -234,7 +232,7 @@ def main():
         channelsMazeInclude = []
         for i in range(len(channelsMap)):
             channelsMazeInclude = channelsMazeInclude + [channelsMap[i][1]]
-    #Write out schedule for each unique day in newepisodes and add network id and start time to new episodes list:
+    #Write out schedule for each unique day in newepisodes and add network id and airstamp to new episodes list:
     if 'mythtv' in homepath:
         tmp_xml_file = '/tmp/xmltvmrm_m.xml'
     else:
@@ -258,9 +256,16 @@ def main():
             else:
                 day = date.today().strftime("%Y%m%d")
                 scheduleday = day
+            #New episodes to record:
             for j in range(len(schedule_dicts)):
-                skip = False
+                skip = True
                 episodeid = schedule_dicts[j]['id']
+                for k in range(len(newepisodes)):
+                    if str(episodeid) == newepisodes[k][2]:
+                        skip = False
+                        break
+                if skip:
+                    continue
                 name = schedule_dicts[j]['show']['name']
                 try:
                     ch_id = str(schedule_dicts[j]['show']['network']['id'])
@@ -309,21 +314,98 @@ def main():
                             if i > 0:
                                 if str(episodeid) == newepisodes[i-1][2]:
                                     logging.info('Warning: Uncorrected time overlap detected for ' + name + ' at ' + start_time.strftime("%Y-%m-%d %H:%M"))
-                                    time.sleep(1)
                                     break
-                            if stop_time <= overlapcheck[k][2]:
+                    overlapcheck.append([ch_id, start_time, stop_time])
+                    if not skip:
+                        xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
+                        xml_file.write('    <title lang="en">'+name+'</title>'+'\n')
+                        xml_file.write('    <sub-title lang="en">'+schedule_dicts[j]['name']+'</sub-title>'+'\n')
+                        xml_file.write('    <desc lang="en">'+description+'</desc>'+'\n')
+                        genres = schedule_dicts[j]['show']['genres']
+                        if len(genres) > 0:
+                            for l in range(len(genres)):
+                                xml_file.write('    <category lang="en">'+genres[l]+'</category>'+'\n')
+                        xml_file.write('    <category lang="en">Show</category>'+'\n')
+                        xml_file.write('  </programme>'+'\n')
+                        if noschedule:
+                            noschedule = False
+            # Guide data other than new episodes to record:
+            for j in range(len(schedule_dicts)):
+                skip = False
+                episodeid = schedule_dicts[j]['id']
+                for k in range(len(newepisodes)):
+                    if str(episodeid) == newepisodes[k][2]:
+                        skip = True
+                        break
+                if skip:
+                    continue
+                name = schedule_dicts[j]['show']['name']
+                try:
+                    ch_id = str(schedule_dicts[j]['show']['network']['id'])
+                    tm = schedule_dicts[j]['airstamp']
+                    start = tm[0:4]+tm[5:7]+tm[8:10]+tm[11:13]+tm[14:16]+tm[17:19]+' '+tm[19:22]+tm[23:25]
+                    start_time = datetime.strptime(start[0:14], "%Y%m%d%H%M%S")
+                except:
+                    logging.info(' Incomplete schedule information for ' + name)
+                    logging.info(' Skipping EPG entry for ' + name)
+                    skip = True
+                if usingNonMazeChIds and not skip:
+                    if ch_id in channelsMazeInclude:
+                        ch_id = channelsMap[channelsMazeInclude.index(ch_id)][0]
+                    else:
+                        if not ch_id in channelsMazeSkipped:
+                            if showdetails:
+                                logging.info(' Skipping TVmaze network id ' + ch_id + ' (not included in xmltvidmap.csv)')
+                            channelsMazeSkipped = channelsMazeSkipped + [ch_id]
+                        continue
+                if i > 0 and not skip:
+                    if str(episodeid) == newepisodes[i-1][2]:
+                        if day != scheduleday:
+                            logging.info(' Error in mythrecmaze.py (unexpected schedule sort order)')
+                            sys.exit(1)
+                if not day in daysdone and not skip:
+                    runtime = schedule_dicts[j]['runtime']
+                    try:
+                        description = re.sub('<[^<]+?>', '', schedule_dicts[j]['summary'])
+                    except:
+                        description = ''
+                    try:
+                        stop_time = start_time + timedelta(minutes=runtime)
+                    except TypeError:
+                        logging.info(' Unable to determine runtime for: ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                        logging.info(' Guessing 60 minutes runtime for ' + name)
+                        stop_time = start_time + timedelta(minutes=60)
+                    stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
+                    for k in range(len(overlapcheck)):
+                        if start_time < overlapcheck[k][2] and stop_time > overlapcheck[k][1] and ch_id == overlapcheck[k][0]:
+                            if start_time >= overlapcheck[k][1] and stop_time <= overlapcheck[k][2]:
                                 skip = True
                                 break
-                            else:
-                                start_time = overlapcheck[k][2]
+                            elif start_time < overlapcheck[k][1] and stop_time > overlapcheck[k][2]:
+                                skip = True
+                                break
+                            elif start_time < overlapcheck[k][1] and stop_time <= overlapcheck[k][2]:
+                                stop_time = overlapcheck[k][1]
                                 try:
-                                    start = start_time.strftime("%Y%m%d%H%M%S")+' '+time[19:22]+time[23:25]
+                                    stop = stop_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
                                 except:
                                     logging.info(' Overlap detected for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                                     logging.info(' Skipping EPG entry for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                                     skip = True
                                     break
-                                logging.info(' Overlap detected and start time adjusted for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                            elif start_time >= overlapcheck[k][1] and stop_time > overlapcheck[k][2]:
+                                start_time = overlapcheck[k][2]
+                                try:
+                                    start = start_time.strftime("%Y%m%d%H%M%S")+' '+tm[19:22]+tm[23:25]
+                                except:
+                                    logging.info(' Overlap detected for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    logging.info(' Skipping EPG entry for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
+                                    skip = True
+                                    break
+                            else:
+                                skip = True
+                                break
+                            logging.info(' Overlap detected and time adjusted for ' + name + ' ' + start_time.strftime("%Y-%m-%d %H:%M"))
                     overlapcheck.append([ch_id, start_time, stop_time])
                     if not skip:
                         xml_file.write('  <programme start="'+start+'" stop="'+stop+'" channel="'+ch_id+'">'+'\n')
