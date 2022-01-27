@@ -53,6 +53,9 @@ def getICalsEpisodes(tokens):
     for i in range(len(tokens)):
         episodes = episodes + getICalEpisodes(tokens[i],utcoffset)
     episodes.sort()
+    day7 = (date.today()+timedelta(days=7)).strftime("%Y%m%d")
+    if episodes[len(episodes)-1][0] != day7:
+        episodes.append([day7, '0000', '0']) #entry addded to always obtain guide data for 7th day
     episodes = list(episodes for episodes,_ in itertools.groupby(episodes)) #Remove any duplicates
     return episodes
 
@@ -261,7 +264,7 @@ def main():
             for j in range(len(schedule_dicts)):
                 skip = True
                 episodeid = schedule_dicts[j]['id']
-                for k in range(len(episodes)):
+                for k in range(len(episodes)):#episodes instead of newepisodes to avoid overlaps in guide data
                     if str(episodeid) == episodes[k][2]:
                         skip = False
                         break
