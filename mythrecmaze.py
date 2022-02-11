@@ -117,7 +117,7 @@ def main():
             try:
                 option = subprocess.check_output("zenity --list --title='Mythrecmaze' --text='Select Option' --column='0' \
                 'Change settings' \
-                'Check for shows to record now' \
+                'Check for shows to record now and exit' \
                 'View log' \
                 'Exit Mythrecmaze' --hide-header \
                 --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
@@ -224,7 +224,8 @@ def main():
         with open(homepath + '/.mythrecmaze/mythrecmaze.pickle', 'wb') as f:
             pickle.dump(episodes, f, pickle.HIGHEST_PROTOCOL)
     else:
-        newepisodes = []
+        if len(episodes) == 0:
+            newepisodes = []
     logging.info(' Downloading TVmaze schedule')
     noschedule = True
     usingNonMazeChIds = False
