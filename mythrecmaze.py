@@ -196,7 +196,7 @@ def main():
                 if not viewedlog:
                     subprocess.call("zenity --info --title='Mythrecmaze' --text='No log file found' --width=150 \
                     --window-icon=/opt/mythrecmaze/mythrecmaze.svg", shell=True)
-            if option == 'Check for shows to record now':
+            if option == 'Check for shows to record now and exit':
                 break
     if os.path.isfile(uhomepath + '/.mythrecmaze/mythrecmaze.cfg') and not mythlanip:
         config.read(uhomepath + '/.mythrecmaze/mythrecmaze.cfg')
