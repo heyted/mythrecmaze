@@ -85,7 +85,7 @@ if __name__ == '__main__':
             showdetails = False
             with open(homepath + '/.mythrecmaze/mythrecmaze.cfg', 'w') as configfile:
                 config.write(configfile)
-        print('Installing hdhrepg2myth')
+        print('Installing mythrecmaze')
         shutil.move("./mythrecmaze.py", "/opt/mythrecmaze/mythrecmaze.py")
         shutil.move("./mythrecmaze.svg", "/opt/mythrecmaze/mythrecmaze.svg")
         shutil.move("./mythrecmaze.desktop", "/usr/share/applications/mythrecmaze.desktop")
