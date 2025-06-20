@@ -2,7 +2,7 @@
 
 Automatically record the TV shows you follow on TVmaze.com using MythTV.
 
-For usage instructions, please see https://htpc.tedsblog.org/2018/05/mythrecmaze.html.
+For usage instructions, please see https://dvrhtpc.blogspot.com/2018/05/mythrecmaze.html.
 
 Instead of or in addition to setting a recording using MythTV, follow your shows on tvmaze.com to have MythTV automatically record them.  A free or paid account on tvmaze.com is required.  The program checks the ical feed for the next seven days.  It then downloads guide data for two days each time it is run and for other days within the next seven days only if there is a change in the ical feed for those days.  It supports multiple API keys (tokens), so everyone in the house can have their own TVmaze account.
 
